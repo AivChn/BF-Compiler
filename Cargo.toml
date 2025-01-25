@@ -5,3 +5,8 @@ edition = "2021"
 
 [dependencies]
 text_io = "0.1.12"
+string-builder = "0.2.0"
+
+[[bin]]
+name = "compiler"
+path = "src/compiler.rs"

@@ -1,8 +1,11 @@
-use text_io::read;
+mod compiler;
 
 fn main() {
-    let x: i32 = read!("{}\r\n");
-    let y: i32 = read!("{}\r\n");
+    let args: Vec<String> = std::env::args().collect();
+    let bind = "".to_string();
+    let path = args.get(1).unwrap_or(&bind);
 
-    println!("{x} * {y} = {}", x*y);
+    if path.is_empty() {println!("No path provided")}
+    else { compiler::run_comiler(path); }
+
 }
