@@ -10,17 +10,14 @@ use string_builder::{Builder, ToBytes};
 *   rbx = index of current cell in tape
 *   rcx = temporary holder of rip in end of loop
 *
-*   TS stands for tape size, since this compiler supports dynamic or custom sizes it will be
-*   inserted at compile time after analysis
-*
 *   x will be replaced with a unique generated number at compile time to make sure labels are
 *   unique but also match when needed (looping for example)
 *
 * Operations:
 *   + = inc byte tape[rbx]
 *   - = dec byte tape[rbx]
-*   > = cmp rbx, TS\ jne skipx\ mov rbx, 0\ skipx: \ inc rbx
-*   < = cmp rbx, 0\ jne skipx\ mov rbx, TS\ skipx: \ dec rbx
+*   > = cmp rbx, 30000\ jne skipx\ mov rbx, 0\ skipx: \ inc rbx
+*   < = cmp rbx, 0\ jne skipx\ mov rbx, 30000\ skipx: \ dec rbx
 *   . = call _print ; _print will be implemented at the end of file
 *   , = call _input ; _input will be implemented at the end of file
 *   [ = cmp byte tape[rbx], 0\ je skipx
@@ -86,31 +83,14 @@ impl Stack {
     }
 }
 
-// Define flags struct =====================================================================
-struct Flags {
-    tape_size: i32,
-}
-
 // general code ==================================================================================================================
-fn get_token_map(tape_size: i32) -> HashMap<&'static str, String> {
+fn get_token_map() -> HashMap<&'static str, String> {
     let mut tokens: HashMap<&'static str, String> = HashMap::new();
 
     tokens.insert("+", "    inc byte tape[rbx]\n".to_string());
     tokens.insert("-", "    dec byte tape[rbx]\n".to_string());
-    tokens.insert(
-        ">",
-        format!(
-            "    cmp rbx, {}\n    jne skip|\n    mov rbx, 0\n    skip|: \n    inc rbx\n",
-            tape_size
-        ),
-    );
-    tokens.insert(
-        "<",
-        format!(
-            "    cmp rbx, 0\n   jne skip|\n    mov rbx, {}\n    skip|: \n    dec rbx\n",
-            tape_size
-        ),
-    );
+    tokens.insert(">", "   cmp rbx, {}\n    jne skip|\n    mov rbx, 0\n    skip|: \n    inc rbx\n".to_string());
+    tokens.insert("<", "    cmp rbx, 0\n   jne skip|\n    mov rbx, {}\n    skip|: \n    dec rbx\n".to_string());
     tokens.insert(".", "    call _print\n".to_string());
     tokens.insert(",", "    call _input\n".to_string());
     tokens.insert("[", "    cmp byte tape[rbx], 0\n    je skip|\n".to_string());
@@ -119,10 +99,10 @@ fn get_token_map(tape_size: i32) -> HashMap<&'static str, String> {
     tokens
 }
 
-fn compile(code: String, flags: Flags) -> Option<String> {
+fn compile(code: String) -> Option<String> {
     // Script start and end will be appended at the start and end of the script string,
     // these are necessary in every bf program no matter what it does
-    let script_start: &str = &format!("section .bss\n   tape resb {}\nsection .text\n    global _start\n_start:\n    mov rbx, 0\n", flags.tape_size);
+    let script_start: &str = &format!("section .bss\n   tape resb 30000\nsection .text\n    global _start\n_start:\n    mov rbx, 0\n");
     let script_end: &str = "\n_end:\n    mov rax, 60\n    mov rdi, 0\n    syscall\n";
 
     // Print and input labels: this will only be added at the end of the file (before script_end)
@@ -134,7 +114,7 @@ fn compile(code: String, flags: Flags) -> Option<String> {
     let mut print_flag: bool = false;
 
     // Gets the token HashMap from the function
-    let tokens = get_token_map(flags.tape_size);
+    let tokens = get_token_map();
 
     // Creates a string builder, this is where the asm code will be saved to
     let mut script_builder: Builder = Builder::default();
@@ -281,40 +261,6 @@ fn assemble_and_link(asm_file: &str, sys: &str) -> Result<(), String> {
     Ok(())
 }
 
-pub fn main() {}
-
-fn evaluate_flags(code: &String) -> HashMap<String, i32> {
-    let lines: Vec<&str> = code.split("\n").collect();
-    let mut flags: HashMap<String, i32> = HashMap::new();
-
-    for line in lines.iter() {
-        if !line.starts_with("#@") {
-            break;
-        }
-
-        // Extract the flag from the line. If the value is not a number, set to the error number
-        // (-1)
-        let flag_parts = line.split("=").collect::<Vec<&str>>();
-        let flag: &str = flag_parts[0].strip_prefix("#@").unwrap();
-        let value: i32 = flag_parts[1].parse::<i32>().unwrap_or(-1);
-
-        flags.insert(flag.to_string(), value);
-    }
-    flags
-}
-
-fn evaluate_size(code: &String, tape_size: i32) -> i32 {
-    match tape_size {
-        0 => 30000 as i32,
-        -1 => {
-            (code.chars().filter(|c| *c == '>').count()
-                - code.chars().filter(|c| *c == '<').count()
-                + 1) as i32
-        }
-        _ => tape_size,
-    }
-}
-
 pub fn run_compiler(path: &String) {
     // Try reading the code file into a string
     let code: String;
@@ -325,15 +271,10 @@ pub fn run_compiler(path: &String) {
         return;
     }
 
-    let flags = evaluate_flags(&code);
-    let tape_size = evaluate_size(&code, *flags.get("size").unwrap_or(&-1));
 
-    let flag: Flags = Flags {
-        tape_size: tape_size,
-    };
 
     // compile the code to assembly
-    let compiled_code = compile(code, flag);
+    let compiled_code = compile(code);
 
     // Create the path for the assembly file and the runnable file name
     let path = Path::new(path);
