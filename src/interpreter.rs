@@ -1,13 +1,11 @@
-mod compiler;
-
-use text_io::read;
-use std::fs;
 use std::env;
+use std::fs;
+use text_io::read;
 
 // Define Stack type
 struct Stack {
     stack: Vec<usize>, // Use usize for consistency with ip
-    top: isize
+    top: isize,
 }
 
 // Implement Stack functions
@@ -15,10 +13,11 @@ impl Stack {
     fn new() -> Self {
         Stack {
             stack: vec![0; 256],
-            top: -1
+            top: -1,
         }
     }
 
+    // Add value to the top of the stack
     fn push(&mut self, val: usize) -> bool {
         if self.top < (self.stack.len() - 1) as isize {
             self.top += 1;
@@ -30,6 +29,7 @@ impl Stack {
         }
     }
 
+    // Remove value from the top of the stack
     fn pop(&mut self) -> Option<usize> {
         if self.top > -1 {
             let val = self.stack[self.top as usize];
@@ -41,7 +41,6 @@ impl Stack {
         }
     }
 }
-
 
 // Main Interpreter
 fn main() {
@@ -58,11 +57,10 @@ fn main() {
 
     if path.is_none() {
         // Get code input
-         code = read!();
+        code = read!();
     } else {
         code = fs::read_to_string(path.unwrap())
             .expect("Failed to read the file. Please check the file path and try again.");
-
     }
 
     let code_vec: Vec<char> = code.chars().collect();
@@ -72,8 +70,20 @@ fn main() {
             // Basic manipulation characters
             '+' => data_tape[dtp] = data_tape[dtp].wrapping_add(1),
             '-' => data_tape[dtp] = data_tape[dtp].wrapping_sub(1),
-            '>' => dtp = if dtp < data_tape.len() - 1 { dtp + 1 } else { 0 },
-            '<' => dtp = if dtp > 0 { dtp - 1 } else { data_tape.len() - 1 },
+            '>' => {
+                dtp = if dtp < data_tape.len() - 1 {
+                    dtp + 1
+                } else {
+                    0
+                }
+            }
+            '<' => {
+                dtp = if dtp > 0 {
+                    dtp - 1
+                } else {
+                    data_tape.len() - 1
+                }
+            }
             '.' => print!("{}", data_tape[dtp] as char),
             ',' => data_tape[dtp] = read!(),
 
@@ -82,7 +92,9 @@ fn main() {
                 if data_tape[dtp] != 0 {
                     stack.push(ip); // Push next instruction onto stack
                 } else {
-                    while code_vec[ip] != ']' { ip += 1; } // Skip loop
+                    while code_vec[ip] != ']' {
+                        ip += 1;
+                    } // Skip loop
                 }
             }
             ']' => {
@@ -93,7 +105,7 @@ fn main() {
                     if tmp.is_none() {
                         println!("could not get ip from stack");
                     } else {
-                        ip = tmp.unwrap()-1;
+                        ip = tmp.unwrap() - 1;
                     }
                 }
             }
@@ -111,5 +123,4 @@ fn main() {
     }
 
     println!();
-
 }
