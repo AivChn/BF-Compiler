@@ -19,3 +19,5 @@ This is a compiler made for this language.
 You can write your beautifully cursed code into a .bf file, and the compiler will compile it into an executable
 with a guaranteed segfault in 3 seconds or less.
 
+> ![INFO] This compiler can *run* on MacOS, Windows and Linux, but the output assembly is only compatible with Linux. 
+> So keep in mind that unless you run Linux, you won't be able to directly run the code compiled.
