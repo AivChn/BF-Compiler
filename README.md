@@ -1,5 +1,5 @@
 # BF Compiler
-This is a ~barely~ ~fully~ NOT functional (I'm working on it) compiler for the esoteric programming language Brainf\*ck.
+This is a ~barely~ fully functional compiler for the esoteric programming language Brainf\*ck.
 
 ## What is Brainf\*ck?
 Brainf\*ck is an esolang invented by Urban Muller in 1993. Since then, it's become the most well known esolang, second only to JavaScript.

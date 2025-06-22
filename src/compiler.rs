@@ -1,9 +1,5 @@
-use std::collections::HashMap;
-use std::io::Write;
-use std::path::Path;
-use std::process::Command;
-use std::{fs, str};
-use string_builder::{Builder, ToBytes};
+use std::{collections::HashMap, fs};
+use string_builder::Builder;
 
 /*
 * Registers and their purpose
@@ -89,8 +85,8 @@ fn get_token_map() -> HashMap<&'static str, String> {
 
     tokens.insert("+", "    inc byte tape[rbx]\n".to_string());
     tokens.insert("-", "    dec byte tape[rbx]\n".to_string());
-    tokens.insert(">", "   cmp rbx, {}\n    jne skip|\n    mov rbx, 0\n    skip|: \n    inc rbx\n".to_string());
-    tokens.insert("<", "    cmp rbx, 0\n   jne skip|\n    mov rbx, {}\n    skip|: \n    dec rbx\n".to_string());
+    tokens.insert(">", "    cmp rbx, 30000\n    jne skip|\n    mov rbx, 0\n    skip|: \n    inc rbx\n".to_string());
+    tokens.insert("<", "    cmp rbx, 0\n    jne skip|\n    mov rbx, 30000\n    skip|: \n    dec rbx\n".to_string());
     tokens.insert(".", "    call _print\n".to_string());
     tokens.insert(",", "    call _input\n".to_string());
     tokens.insert("[", "    cmp byte tape[rbx], 0\n    je skip|\n".to_string());
@@ -216,92 +212,17 @@ fn compile(code: String) -> Option<String> {
     Some(script_builder.string().unwrap())
 }
 
-fn assemble_and_link(asm_file: &str, sys: &str) -> Result<(), String> {
-    // Create necessary variables with values dependent on OS
-    let nasm_fmt;
-    let object_file;
-    let output_file;
 
-    // Assign values based on current OS
-    if sys == "win" {
-        nasm_fmt = "win64";
-        object_file = asm_file.replace(".asm", ".obj");
-        output_file = asm_file.replace(".asm", ".exe");
-    } else {
-        nasm_fmt = "elf64";
-        object_file = asm_file.replace(".asm", ".o");
-        output_file = asm_file.replace(".asm", "");
-    }
-
-    // run the assembler
-    let nasm_status = Command::new("nasm")
-        .arg("-f")
-        .arg(nasm_fmt)
-        .arg(asm_file)
-        .status()
-        .expect("Failed to execute NASM");
-
-    if !nasm_status.success() {
-        return Err("Failed to assemble the file".to_string());
-    }
-
-    // run the linker
-    let ld_status = Command::new("ld")
-        .arg("-o")
-        .arg(output_file)
-        .arg(&object_file)
-        .status()
-        .expect("Failed to execute LD");
-
-    if !ld_status.success() {
-        return Err("Failed to link file".to_string());
-    }
-
-    // Return OK if nothing stopped the function ahead of time
-    Ok(())
-}
-
-pub fn run_compiler(path: &String) {
+pub fn run_compiler(path: &String) -> Result<String, String> {
     // Try reading the code file into a string
     let code: String;
-    code = fs::read_to_string(path).unwrap_or("None".to_string());
-
-    if code == "None".to_string() {
-        println!("Error: could not read file");
-        return;
-    }
-
-
-
-    // compile the code to assembly
-    let compiled_code = compile(code);
-
-    // Create the path for the assembly file and the runnable file name
-    let path = Path::new(path);
-    let dir = path.parent();
-
-    let filename = path.file_stem().unwrap().to_str().unwrap_or("\0");
-    if filename == "\0" {
-        println!("Error: Unable to find filename within path");
-        return;
-    }
-
-    let asm_file = dir.unwrap().join(filename.to_string() + ".asm");
-    let runnable_name = dir.unwrap().join(filename.to_string());
-
-    // Create the file object
-    let mut file = fs::File::create(asm_file.as_path()).unwrap();
-
-    // Checks if code was compiled correctly and writes to file if it did
-    if compiled_code.is_none() {
-        println!("Error while compiling code, compilation failed");
-        return;
-    }
-    let _ = file.write_all(compiled_code.unwrap().to_bytes().as_slice());
-
-    // Tries assembling and linking the file
-    match assemble_and_link(asm_file.to_str().unwrap(), runnable_name.to_str().unwrap()) {
-        Ok(_) => println!("Successfully assembled and linked!"),
-        Err(err) => eprintln!("Error: {err}"),
+    code = match fs::read_to_string(path) {
+        Ok(code) => code,
+        Err(error) => return Err(format!("Could not read file: {}", error))
     };
+
+    match compile(code) {
+        Some(compiled_code) => Ok(compiled_code),
+        _ => Err("Compilation failed for unknown reasons".to_string())
+    }
 }

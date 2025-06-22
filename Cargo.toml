@@ -11,4 +11,4 @@ once_cell = "1"
 
 [[bin]]
 name = "compiler"
-path = "src/compiler.rs"
+path = "src/main.rs"
