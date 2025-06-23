@@ -27,11 +27,11 @@ with a guaranteed segfault in 3 seconds or less.
 2. cd into the folder.
 ```sh  
 # usually
-cd ~/Downloads/bfc_release
+$ cd ~/Downloads/bfc_release
 ```
 3. Execute the installer script.
 ```sh 
-./installer.sh 
+$ ./installer.sh 
 ```
 4. And that's it. You might need to restart your terminal.
 
@@ -39,7 +39,7 @@ cd ~/Downloads/bfc_release
 1. Create a .bf file and write your code in it.
 2. To compile, use
 ```sh
-bfc <bf file path>
+$ bfc <bf file path>
 ```
 3. The compiler will create a .asm, .o and executable files with the same name in the same directory as the original.
 4. Execute your executable.
