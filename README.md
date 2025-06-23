@@ -23,7 +23,7 @@ with a guaranteed segfault in 3 seconds or less.
 > This compiler is built specifically for x86\_64 linux, and will not run anywhere else.
 
 ## Installation
-1. Download the tar.gz file from the release and unzip it.
+1. Download the tar.gz release and unzip it.
 2. cd into the folder.
 ```sh  
 # usually
@@ -39,7 +39,11 @@ $ ./installer.sh
 1. Create a .bf file and write your code in it.
 2. To compile, use
 ```sh
-$ bfc <bf file path>
+$ bfc /path/to/your/file.bf
 ```
-3. The compiler will create a .asm, .o and executable files with the same name in the same directory as the original.
-4. Execute your executable.
+3. The compiler will create a
+   - assembly file
+   - object file
+   - executable file
+   - all with the same name as the .bf, in the same folder.
+5. Execute your executable.
